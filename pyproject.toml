@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sarthllm"
+version = "0.0.1"
+description = "GPT-2 style LLM built from scratch"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy", "tiktoken", "datasets",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "pre-commit"]
+
+[project.scripts]
+sarthllm = "sarthllm.cli.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

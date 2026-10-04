@@ -1,0 +1,20 @@
+# environment
+.venv/
+.env
+
+# python
+__pycache__/
+*.pyc
+
+# packaging (setuptools)
+*.egg-info/
+build/
+dist/
+
+# tooling caches
+.pytest_cache/
+.ruff_cache/
+
+# data and checkpoints (go to HF Hub, not git)
+artifacts/*
+!artifacts/.gitkeep
