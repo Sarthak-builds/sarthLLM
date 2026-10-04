@@ -18,3 +18,6 @@ dist/
 # data and checkpoints (go to HF Hub, not git)
 artifacts/*
 !artifacts/.gitkeep
+
+# documentation (local only)
+docs/

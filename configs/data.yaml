@@ -1,0 +1,4 @@
+dataset: HuggingFaceFW/fineweb-edu
+raw_prefix: sample/10BT/
+raw_files: 2                      # first 2 parquet files because each somehwat 0.7 million? so its roughly, 1.4billion. 
+raw_dir: artifacts/raw/fineweb_edu
