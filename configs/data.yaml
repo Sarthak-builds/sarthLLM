@@ -1,4 +1,13 @@
 dataset: HuggingFaceFW/fineweb-edu
 raw_prefix: sample/10BT/
-raw_files: 2                      # first 2 parquet files because each somehwat 0.7 million? so its roughly, 1.4billion. 
+raw_files: 2
 raw_dir: artifacts/raw/fineweb_edu
+
+
+text_field: text
+out_dir: artifacts/data/fineweb_edu
+shard_tokens: 100000000      # 100M tokens per shard (200 MB)
+target_tokens: 1000000000    # stop after 1B tokens
+min_chars: 200               # drop tiny docs
+batch_docs: 1000             # docs tokenized per batch
+num_threads: 4

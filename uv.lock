@@ -1856,6 +1856,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "pyyaml" },
     { name = "tiktoken" },
+    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -1876,6 +1877,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "tiktoken" },
+    { name = "tqdm", specifier = ">=4.70.1" },
 ]
 provides-extras = ["dev"]
 
