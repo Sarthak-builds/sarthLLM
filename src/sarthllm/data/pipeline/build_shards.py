@@ -39,7 +39,8 @@ def to_uint16(docs_ids):
 
 
 def main(cfg_path):
-    cfg = yaml.safe_load(open(cfg_path))
+    with open(cfg_path) as f:
+        cfg = yaml.safe_load(f)
     out = Path(cfg["out_dir"])
     out.mkdir(parents=True, exist_ok=True)
     paths = sorted(Path(cfg["raw_dir"]).rglob("*.parquet"))
