@@ -26,3 +26,7 @@ seed: 2104
 out_dir: artifacts/runs/pretrain   # metrics.jsonl goes here (checkpoints later)
 log_every: 10
 max_steps: null                    # set a number for short test runs
+
+hf_runs_repo: Sarthakhq/sarthllm-runs   # private model repo holding checkpoints between sessions; null turns sync off
+upload_every_minutes: 60
+max_runtime_minutes: 500                # stop cleanly before Kaggle's ~9 h session limit

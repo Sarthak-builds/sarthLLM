@@ -2,6 +2,7 @@
 import argparse
 import json
 import math
+import signal
 import time
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from sarthllm.model.config import cfg
 from sarthllm.model.generate import generate_text
 from sarthllm.model.llm import SarthLLM
 from sarthllm.train.checkpoint import load_latest_checkpoint, save_best, save_checkpoint
+from sarthllm.train.hub_sync import pull_latest, push_run
 from sarthllm.train.loss import calc_loss_batch, calc_loss_loader
 from sarthllm.train.optim import build_optimizer, get_lr, set_lr
 
@@ -49,6 +51,11 @@ def amp_context(device, enabled):
     return torch.autocast(device_type=device, dtype=torch.float16, enabled=enabled)
 
 
+def raise_keyboard_interrupt(signum, frame):
+    # a SIGTERM (session being stopped) takes the same save-and-exit path as Ctrl+C
+    raise KeyboardInterrupt
+
+
 def make_train_loader(train_ds, micro_batch_size, sequences_done, seed):
     # one fixed shuffled order; resuming just skips the sequences already trained on
     order = torch.randperm(len(train_ds), generator=torch.Generator().manual_seed(seed)).tolist()
@@ -68,12 +75,18 @@ def check_resume_compatible(checkpoint, tc):
 
 def main(config_path, overrides):
     tc = load_train_config(config_path, overrides)
+    deadline = time.monotonic() + tc["max_runtime_minutes"] * 60  # counted from the start, data loading included
+    signal.signal(signal.SIGTERM, raise_keyboard_interrupt)
     torch.manual_seed(tc["seed"])
     device = "cuda" if torch.cuda.is_available() else "cpu"
     use_amp = device == "cuda"  # fp16 + gradient scaler (the T4 has no bf16)
     out_dir = Path(tc["out_dir"])
     out_dir.mkdir(parents=True, exist_ok=True)
     metrics_path = out_dir / "metrics.jsonl"
+
+    hub_repo = tc.get("hf_runs_repo")
+    if hub_repo:
+        pull_latest(out_dir, hub_repo)  # newest checkpoint from the Hub; stops here on a bad token
 
     # data: shards -> windows -> train/test split
     shards = TokenShards(tc["data_dir"], max_tokens=tc["max_tokens"])
@@ -134,6 +147,7 @@ def main(config_path, overrides):
 
     completed_steps = start_step
     last_save_time = time.monotonic()
+    last_upload_time = time.monotonic()
     model.train()
     try:
         for step in range(start_step, total_steps):
@@ -184,13 +198,23 @@ def main(config_path, overrides):
             if is_eval_step:
                 print(f"  >> test loss {record['test_loss']:.3f} | sample: {sample!r}")
 
+            time_is_up = time.monotonic() > deadline
             minutes_since_save = (time.monotonic() - last_save_time) / 60
-            if minutes_since_save > tc["checkpoint_every_minutes"] or completed_steps == total_steps:
+            if minutes_since_save > tc["checkpoint_every_minutes"] or completed_steps == total_steps or time_is_up:
                 save_checkpoint(checkpoint_state(completed_steps), out_dir, completed_steps)
                 last_save_time = time.monotonic()
+                if hub_repo and (time.monotonic() - last_upload_time) / 60 > tc["upload_every_minutes"]:
+                    push_run(out_dir, hub_repo)
+                    last_upload_time = time.monotonic()
+            if time_is_up:
+                print(f"time limit reached after step {completed_steps}: stopping so the next session can resume")
+                break
     except KeyboardInterrupt:
         print(f"interrupted: saving checkpoint at step {completed_steps}")
         save_checkpoint(checkpoint_state(completed_steps), out_dir, completed_steps)
+
+    if hub_repo:
+        push_run(out_dir, hub_repo, include_best=True)  # final upload; skips files the Hub already has
 
 
 if __name__ == "__main__":
