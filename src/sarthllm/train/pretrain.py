@@ -32,7 +32,9 @@ def load_train_config(config_path, overrides):
         value = yaml.safe_load(value)
         default = train_cfg[key]
         if isinstance(value, str) and isinstance(default, (int, float)):
-            value = type(default)(value)  # PyYAML reads 3e-4 as a string: make it a number
+            value = float(value)  # PyYAML reads 3e-4 and 2e7 as strings: make them numbers
+            if isinstance(default, int):
+                value = int(value)
         train_cfg[key] = value
     return train_cfg
 
