@@ -27,7 +27,13 @@ def load_train_config(config_path, overrides):
     train_cfg = yaml.safe_load(Path(config_path).read_text())
     for item in overrides:  # e.g. --set max_steps=20 micro_batch_size=2
         key, value = item.split("=", 1)
-        train_cfg[key] = yaml.safe_load(value)
+        if key not in train_cfg:
+            raise SystemExit(f"unknown setting '{key}': it is not in {config_path}")
+        value = yaml.safe_load(value)
+        default = train_cfg[key]
+        if isinstance(value, str) and isinstance(default, (int, float)):
+            value = type(default)(value)  # PyYAML reads 3e-4 as a string: make it a number
+        train_cfg[key] = value
     return train_cfg
 
 
@@ -146,12 +152,12 @@ def main(config_path, overrides):
             grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), tc["grad_clip"])
             scaler.step(optimizer)
             scaler.update()
+            completed_steps = step + 1  # the weights just changed: count the step before anything can interrupt
+            tokens_seen += tokens_per_step
 
             train_loss = step_loss.item()  # also waits for the GPU, so the timing below is honest
             if not math.isfinite(train_loss):
-                raise SystemExit(f"loss is {train_loss} at step {step + 1}: stopping")
-            completed_steps = step + 1
-            tokens_seen += tokens_per_step
+                raise SystemExit(f"loss is {train_loss} at step {completed_steps}: stopping")
             record = {
                 "step": completed_steps, "tokens_seen": tokens_seen, "lr": lr,
                 "train_loss": train_loss, "grad_norm": float(grad_norm),

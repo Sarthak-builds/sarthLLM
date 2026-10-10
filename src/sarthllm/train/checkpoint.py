@@ -29,7 +29,9 @@ def save_best(model, out_dir, step, test_loss):
 
 
 def load_latest_checkpoint(out_dir, device):
-    checkpoints = list_checkpoints(out_dir)
-    if not checkpoints:
-        return None
-    return torch.load(checkpoints[-1], map_location=device, weights_only=True)
+    for checkpoint_path in reversed(list_checkpoints(out_dir)):  # newest first
+        try:
+            return torch.load(checkpoint_path, map_location=device, weights_only=True)
+        except Exception as error:  # corrupt or half-written file: fall back to the older one
+            print(f"could not read {checkpoint_path.name} ({error}); trying an older checkpoint")
+    return None
