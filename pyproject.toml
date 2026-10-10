@@ -9,14 +9,13 @@ description = "GPT-2 style LLM built from scratch"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "numpy",
-  "tiktoken",
-  "datasets",
-  "huggingface-hub>=1.33.0",
-  "pyyaml>=6.0.3",
-  "pyarrow>=25.0.1",
-  "tqdm>=4.70.1",
-  "torch>=2.14.1",
+    "numpy",
+    "tiktoken",
+    "huggingface-hub>=0.24",
+    "pyyaml>=6.0",
+    "pyarrow>=15",
+    "tqdm",
+    "torch>=2.3",
 ]
 
 [project.optional-dependencies]

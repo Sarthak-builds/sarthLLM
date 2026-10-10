@@ -1,0 +1,28 @@
+# data
+data_dir: artifacts/data/fineweb_edu
+max_tokens: 500000000        # training budget: first N tokens of the stream
+test_ratio: 0.01
+
+# batch size
+micro_batch_size: 4          # sequences per forward pass; tune to GPU memory
+tokens_per_step: 262144      # tokens per optimizer step = 256 sequences x 1024 tokens
+
+# optimizer and schedule
+peak_lr: 6.0e-4              # lower to 3.0e-4 if the loss spikes
+min_lr: 6.0e-5               # 10% of peak
+warmup_steps: 100
+weight_decay: 0.1
+beta1: 0.9
+beta2: 0.95
+grad_clip: 1.0
+
+# monitoring and checkpoints
+eval_every: 250              # steps
+eval_batches: 20
+checkpoint_every_minutes: 15
+sample_prompt: "Every effort moves you"
+seed: 2104
+
+out_dir: artifacts/runs/pretrain   # metrics.jsonl goes here (checkpoints later)
+log_every: 10
+max_steps: null                    # set a number for short test runs

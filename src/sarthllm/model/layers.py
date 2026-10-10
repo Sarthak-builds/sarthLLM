@@ -5,10 +5,10 @@ from torch import nn
 
 
 class LayerNorm(nn.Module):
-    def __init__(self, embedding_dim, eps= 1e-5):
+    def __init__(self, embedding_dim, eps=1e-5):
         super().__init__()
         self.eps = eps
-        self.weights = nn.Parameter(torch.ones(embedding_dim))
+        self.weight = nn.Parameter(torch.ones(embedding_dim))  
         self.bias = nn.Parameter(torch.zeros(embedding_dim))
 
     def forward(self, hidden_states):
@@ -40,7 +40,7 @@ class FeedForward(nn.Module):
         return self.net(hidden_states)   
 
 class Residual(nn.Module):
-    def __init___(self, sublayer):
+    def __init__(self, sublayer):  
         super().__init__()
         self.sublayer = sublayer
 

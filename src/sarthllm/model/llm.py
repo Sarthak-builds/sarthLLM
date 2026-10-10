@@ -19,20 +19,23 @@ class SarthLLM(nn.Module):
         self.final_norm = LayerNorm(cfg["emb_dim"])
         self.out_head = nn.Linear(cfg["emb_dim"], cfg["vocab_size"], bias=False)
 
+        nn.init.normal_(self.tok_emb.weight, std=0.02)
+        nn.init.normal_(self.pos_emb.weight, std=0.02)
+
         self.out_head.weight = self.tok_emb.weight
 
     def forward(self, input_ids):
+        # input_ids: [batch_size, num_tokens] -> logits: [batch_size, num_tokens, vocab_size]
         _, num_tokens = input_ids.shape
         if num_tokens > self.context_length:
             raise ValueError(f"got {num_tokens} tokens, max is {self.context_length}")
 
-        token_embeds = self.tok_emb(input_ids)  
+        token_embeds = self.tok_emb(input_ids) 
         positions = torch.arange(num_tokens, device=input_ids.device)
-        position_embeds = self.pos_emb(positions)  
+        position_embeds = self.pos_emb(positions) 
 
         hidden_states = self.drop_emb(token_embeds + position_embeds)
         hidden_states = self.trf_blocks(hidden_states)
         hidden_states = self.final_norm(hidden_states)
         logits = self.out_head(hidden_states)
         return logits
-
